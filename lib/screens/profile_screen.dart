@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_notifier.dart';
+import '../utils/snackbar_helper.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -21,8 +22,17 @@ class ProfileScreen extends StatelessWidget {
             Text('Welcome, ${user?.email}', style: TextStyle(fontSize: 18)),
             SizedBox(height: screenWidth * 0.05),
             ElevatedButton(
-              onPressed: () {
-                context.read<AuthNotifier>().signOut();
+              onPressed: () async {
+                try {
+                  await context.read<AuthNotifier>().signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  }
+                } catch (_) {
+                  if (context.mounted) {
+                    SnackBarHelper.show(context, 'Gagal keluar. Coba lagi.');
+                  }
+                }
               },
               child: Text('Logout'),
             ),

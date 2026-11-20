@@ -13,7 +13,7 @@ class Todo {
     this.createdAt,
   });
 
-  // Firestore-> objek TODO
+  // Firestore-> objekTODO
   // READ
   factory Todo.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
@@ -25,7 +25,6 @@ class Todo {
     );
   }
 
-  // Objek TODO ->Firestore
   // CREATE
   Map<String, dynamic> toMap() {
     return {

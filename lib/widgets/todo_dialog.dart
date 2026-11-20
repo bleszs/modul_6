@@ -10,7 +10,30 @@ class TodoDialog extends StatefulWidget {
 }
 
 class _TodoDialogState extends State<TodoDialog> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _taskController = TextEditingController();
+  bool _isSaving = false;
+  String? _saveError;
+
+  Future<void> _save() async {
+    if (_isSaving || !_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSaving = true;
+      _saveError = null;
+    });
+    try {
+      await widget.firestoreService.addTodo(_taskController.text.trim());
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+          _saveError = 'Gagal menyimpan tugas. Coba lagi.';
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -21,25 +44,33 @@ class _TodoDialogState extends State<TodoDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add Todo'),
-      content: TextField(
-        controller: _taskController,
-        autofocus: true,
-        decoration: const InputDecoration(hintText: 'add new task...'),
+      scrollable: true,
+      title: const Text('Tambah tugas'),
+      content: Form(
+        key: _formKey,
+        child: TextFormField(
+          controller: _taskController,
+          autofocus: true,
+          readOnly: _isSaving,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(
+            labelText: 'Nama tugas',
+            errorText: _saveError,
+          ),
+          validator: (value) => value == null || value.trim().isEmpty
+              ? 'Masukkan nama tugas.'
+              : null,
+          onFieldSubmitted: (_) => _save(),
+        ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
+          child: const Text('Batal'),
         ),
-        ElevatedButton(
-          onPressed: () {
-            if (_taskController.text.trim().isNotEmpty) {
-              widget.firestoreService.addTodo(_taskController.text.trim());
-              Navigator.pop(context);
-            }
-          },
-          child: const Text('Save'),
+        FilledButton(
+          onPressed: _isSaving ? null : _save,
+          child: Text(_isSaving ? 'Menyimpan…' : 'Simpan'),
         ),
       ],
     );
